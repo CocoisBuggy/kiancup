@@ -2,6 +2,10 @@ import { Schema } from "mongoose";
 
 export type UserDoc = {
   _id: Schema.Types.ObjectId;
+  /**
+   * Username is meant more as a human-readable ID. It should ideally
+   * not get used much on the frontend - as it is designed to be static.
+   */
   username: string;
   name: string;
   active: boolean;

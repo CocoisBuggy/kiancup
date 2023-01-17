@@ -1,13 +1,12 @@
 import { Booking } from "./booking";
 import { Game } from "./game";
-import { BookingModel, GameModel } from "./models";
+import { BookingModel, GameModel, UserModel } from "./models";
 import { UserDoc } from "./types";
 
 import fs from "fs";
 
-const userFile = JSON.parse(
-  fs.readFileSync("./users.json", "utf-8").toString()
-);
+const userFile: { [key: string]: { name: string; password: string } } =
+  JSON.parse(fs.readFileSync("./users.json", "utf-8").toString());
 
 export class User {
   doc: UserDoc;
@@ -39,4 +38,26 @@ export class User {
   passwordCorrect(hashedPassword: string): boolean {
     return userFile[this.doc.username].password === hashedPassword;
   }
+}
+
+export function initUsers() {
+  for (const username in userFile) {
+    const user = userFile[username];
+
+    const doc = new UserModel({
+      name: user.name,
+      username: username,
+      active: true,
+    });
+
+    doc.save();
+  }
+
+  // now de-activate all users that no longer appear in the file
+  // This means the relational integrity of the database is maintained,
+  // but the user can be disabled and no longer able to log in.
+  UserModel.updateMany(
+    { username: { $nin: Object.keys(userFile) } },
+    { active: false }
+  ).exec();
 }
